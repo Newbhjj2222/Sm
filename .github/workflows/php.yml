@@ -1,4 +1,4 @@
-name: sm 
+name: sm
 
 on:
   push:
@@ -11,8 +11,11 @@ permissions:
 
 jobs:
   build:
-
-    runs-on: ubuntu-latest
+    # Dukoresha container ya PHP na Composer
+    runs-on: ubuntu-latest  # GitHub igomba kuba ifite OS, ariko container izajya ikora PHP
+    container:
+      image: php:8.2-cli  # ushobora guhindura version ya PHP
+      options: --user 1000
 
     steps:
     - uses: actions/checkout@v4
@@ -32,8 +35,6 @@ jobs:
     - name: Install dependencies
       run: composer install --prefer-dist --no-progress
 
-    # Add a test script to composer.json, for instance: "test": "vendor/bin/phpunit"
-    # Docs: https://getcomposer.org/doc/articles/scripts.md
-
+    # Gushyiramo tests niba ushaka
     # - name: Run test suite
     #   run: composer run-script test
