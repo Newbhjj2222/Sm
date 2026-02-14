@@ -12,17 +12,24 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container:
-      image: shivammathur/php:8.2-cli-composer   # image iri kuri Docker Hub
-      # options: ""  # root user
 
     steps:
+    # 1. Checkout code
     - name: Checkout code
       uses: actions/checkout@v4
 
+    # 2. Setup PHP 8.2 + Composer
+    - name: Setup PHP with Composer
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+        # Composer is installed by default
+
+    # 3. Validate composer.json and composer.lock
     - name: Validate composer.json and composer.lock
       run: composer validate --strict
 
+    # 4. Cache Composer packages
     - name: Cache Composer packages
       id: composer-cache
       uses: actions/cache@v3
@@ -32,10 +39,12 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-php-
 
-    - name: Install dependencies
+    # 5. Install dependencies
+    - name: Install Composer dependencies
       run: composer install --prefer-dist --no-progress
       env:
         COMPOSER_ALLOW_SUPERUSER: 1
 
+    # 6. Optional: run tests
     # - name: Run tests
-    #   run: composer run-script test
+    #   run: vendor/bin/phpunit
