@@ -11,14 +11,16 @@ permissions:
 
 jobs:
   build:
-    # Dukoresha container ya PHP na Composer
-    runs-on: ubuntu-latest  # GitHub igomba kuba ifite OS, ariko container izajya ikora PHP
+    runs-on: ubuntu-latest   # Iri ni runner, ariko commands zose zikorwa muri container
     container:
-      image: php:8.2-cli  # ushobora guhindura version ya PHP
-      options: --user 1000
+      image: php:8.2-cli      # version ya PHP ushaka
+      options: --user 1000:1000  # user ifite permission yo kwandika muri runner
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        persist-credentials: false  # birinda permission error muri container
 
     - name: Validate composer.json and composer.lock
       run: composer validate --strict
@@ -34,7 +36,9 @@ jobs:
 
     - name: Install dependencies
       run: composer install --prefer-dist --no-progress
+      env:
+        COMPOSER_ALLOW_SUPERUSER: 1  # birinda Composer permission error
 
-    # Gushyiramo tests niba ushaka
+    # Gushyiramo tests niba ufite script muri composer.json
     # - name: Run test suite
     #   run: composer run-script test
