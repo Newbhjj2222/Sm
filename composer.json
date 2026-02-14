@@ -1,6 +1,11 @@
 {
+    "name": "sm",
+    "description": "Backend API using Firebase and Appwrite",
+    "type": "project",
+    "license": "proprietary",
     "require": {
-        "kreait/firebase-php": "7.0",
-        "appwrite/appwrite": "15.0.0"
+        "php": "^8.1",
+        "kreait/firebase-php": "^7.0",
+        "appwrite/appwrite": "^15.0"
     }
 }
