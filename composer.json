@@ -1,5 +1,5 @@
 {
-    "name": "sm",
+    "name": "admin/sm",
     "description": "Backend API using Firebase and Appwrite",
     "type": "project",
     "license": "proprietary",
