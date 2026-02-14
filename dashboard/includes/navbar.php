@@ -9,13 +9,13 @@
 
     <!-- Navbar links -->
     <ul class="nav-links">
-      <li><a href="./dashboard/index.php" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+      <li><a href="./index.php" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
       <li><a href="./dashboard/students.php"><i class="fas fa-user-graduate"></i> Students</a></li>
-      <li><a href="teachers.php"><i class="fas fa-chalkboard-teacher"></i> Teachers</a></li>
-      <li><a href="classes.php"><i class="fas fa-school"></i> Classes</a></li>
-      <li><a href="messeges.php"><i class="fas fa-comments"></i> Messeges</a></li>
-      <li><a href="attendance.php"><i class="fas fa-calendar-check"></i> Attendance</a></li>
-      <li><a href="attendancemanager.php"><i class="fas fa-calendar-check"></i> Attendance Manager</a></li>
+      <li><a href="./teachers.php"><i class="fas fa-chalkboard-teacher"></i> Teachers</a></li>
+      <li><a href="./classes.php"><i class="fas fa-school"></i> Classes</a></li>
+      <li><a href="./messeges.php"><i class="fas fa-comments"></i> Messeges</a></li>
+      <li><a href="./attendance.php"><i class="fas fa-calendar-check"></i> Attendance</a></li>
+      <li><a href="./attendancemanager.php"><i class="fas fa-calendar-check"></i> Attendance Manager</a></li>
       <li class="dropdown">
         <a href="#" class="dropdown-toggle"><i class="fas fa-user-cog"></i> Admin</a>
         <ul class="dropdown-menu">
@@ -162,4 +162,5 @@ toggler.addEventListener("click", ()=>{
     }
 });
 </script>
+
 
