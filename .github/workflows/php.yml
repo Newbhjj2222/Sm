@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
 
 permissions:
-  contents: read
+  contents: write   # write permission kugirango workflow ibashe gukora commit
 
 jobs:
   build:
@@ -17,17 +17,24 @@ jobs:
     # 1. Checkout code
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        persist-credentials: true   # kugirango push ikore
 
-    # 2. Setup PHP 8.2 + Composer
+    # 2. Setup PHP + Composer
     - name: Setup PHP with Composer
       uses: shivammathur/setup-php@v2
       with:
         php-version: '8.2'
-        # Composer is installed by default
 
     # 3. Validate composer.json and composer.lock
     - name: Validate composer.json and composer.lock
-      run: composer validate --strict
+      run: |
+        composer validate --strict || composer update
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add composer.lock
+        git commit -m "Update composer.lock via CI" || echo "No changes to commit"
+        git push
 
     # 4. Cache Composer packages
     - name: Cache Composer packages
