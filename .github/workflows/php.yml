@@ -13,8 +13,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: php:8.2-cli
-      options: ""  # Root user, ntugashyire --user
+      image: php:8.2-cli   # root user, nta options empty string
 
     steps:
     - name: Checkout code
@@ -36,3 +35,6 @@ jobs:
       run: composer install --prefer-dist --no-progress
       env:
         COMPOSER_ALLOW_SUPERUSER: 1
+
+    # - name: Run tests
+    #   run: composer run-script test
