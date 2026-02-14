@@ -13,7 +13,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: php:8.2-cli   # root user, nta options empty string
+      image: ghcr.io/shivammathur/php:8.2-cli-composer   # PHP + Composer ready
 
     steps:
     - name: Checkout code
