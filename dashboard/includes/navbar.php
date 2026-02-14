@@ -9,8 +9,8 @@
 
     <!-- Navbar links -->
     <ul class="nav-links">
-      <li><a href="index.php" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-      <li><a href="students.php"><i class="fas fa-user-graduate"></i> Students</a></li>
+      <li><a href="./dashboard/index.php" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+      <li><a href="./dashboard/students.php"><i class="fas fa-user-graduate"></i> Students</a></li>
       <li><a href="teachers.php"><i class="fas fa-chalkboard-teacher"></i> Teachers</a></li>
       <li><a href="classes.php"><i class="fas fa-school"></i> Classes</a></li>
       <li><a href="messeges.php"><i class="fas fa-comments"></i> Messeges</a></li>
@@ -162,3 +162,4 @@ toggler.addEventListener("click", ()=>{
     }
 });
 </script>
+
