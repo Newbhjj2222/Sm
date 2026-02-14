@@ -13,7 +13,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/shivammathur/php:8.2-cli-composer   # PHP + Composer ready
+      image: shivammathur/php:8.2-cli-composer   # image iri kuri Docker Hub
+      # options: ""  # root user
 
     steps:
     - name: Checkout code
