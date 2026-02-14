@@ -1,0 +1,6 @@
+{
+    "require": {
+        "kreait/firebase-php": "7.0",
+        "appwrite/appwrite": "15.0.0"
+    }
+}
