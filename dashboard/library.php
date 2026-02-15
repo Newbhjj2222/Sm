@@ -1,6 +1,8 @@
 <?php
 require __DIR__.'/dbcon.php';
 
+session_start(); // For messages
+
 /* ===== CLOUDINARY UPLOAD FUNCTION ===== */
 function uploadToCloudinary($fileTmp, $fileType)
 {
@@ -23,11 +25,19 @@ function uploadToCloudinary($fileTmp, $fileType)
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
     $response = curl_exec($ch);
+    if(curl_errno($ch)) {
+        curl_close($ch);
+        return ['error' => curl_error($ch)];
+    }
     curl_close($ch);
 
     $data = json_decode($response, true);
 
-    return $data['secure_url'] ?? '';
+    if (isset($data['error'])) {
+        return ['error' => $data['error']['message']];
+    }
+
+    return ['url' => $data['secure_url'] ?? ''];
 }
 
 /* ===== ADD BOOK ===== */
@@ -39,16 +49,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_book'])) {
     $class = $_POST['class'] ?? '';
 
     $fileUrl = '';
-    if (!empty($_FILES['file']['tmp_name'])) {
-        $fileUrl = uploadToCloudinary($_FILES['file']['tmp_name'], $_FILES['file']['type']);
-    }
-
     $imageUrl = '';
-    if (!empty($_FILES['image']['tmp_name'])) {
-        $imageUrl = uploadToCloudinary($_FILES['image']['tmp_name'], $_FILES['image']['type']);
+
+    // Upload file
+    if (!empty($_FILES['file']['tmp_name'])) {
+        $res = uploadToCloudinary($_FILES['file']['tmp_name'], $_FILES['file']['type']);
+        if (isset($res['error'])) {
+            $_SESSION['error'] = "File upload failed: ".$res['error'];
+            header("Location: library.php");
+            exit;
+        }
+        $fileUrl = $res['url'];
     }
 
-    // Save to Firebase Realtime Database
+    // Upload image
+    if (!empty($_FILES['image']['tmp_name'])) {
+        $res = uploadToCloudinary($_FILES['image']['tmp_name'], $_FILES['image']['type']);
+        if (isset($res['error'])) {
+            $_SESSION['error'] = "Image upload failed: ".$res['error'];
+            header("Location: library.php");
+            exit;
+        }
+        $imageUrl = $res['url'];
+    }
+
+    // Save metadata in Firebase
     $realtimeDatabase->getReference("library/$id")->set([
         "id" => $id,
         "name" => $name,
@@ -58,6 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_book'])) {
         "image" => $imageUrl
     ]);
 
+    $_SESSION['success'] = "Book added successfully!";
     header("Location: library.php");
     exit;
 }
@@ -71,6 +97,15 @@ include("includes/header.php");
 <div class="container mt-5 pt-5">
 
 <h3>Add Book</h3>
+
+<?php if(isset($_SESSION['success'])): ?>
+    <div class="alert alert-success"><?= $_SESSION['success']; unset($_SESSION['success']); ?></div>
+<?php endif; ?>
+
+<?php if(isset($_SESSION['error'])): ?>
+    <div class="alert alert-danger"><?= $_SESSION['error']; unset($_SESSION['error']); ?></div>
+<?php endif; ?>
+
 <form method="POST" enctype="multipart/form-data" class="row g-2">
 
     <input class="form-control col-md-4" name="name" placeholder="Book Name" required>
@@ -87,8 +122,17 @@ include("includes/header.php");
         <option value="">Select Class</option>
     </select>
 
-    <input type="file" class="form-control col-md-2" name="file" required>
-    <input type="file" class="form-control col-md-2" name="image">
+    <!-- File input with placeholder -->
+    <div class="col-md-2">
+        <input type="file" class="form-control" name="file" id="fileInput" required>
+        <small id="filePlaceholder" class="form-text text-muted">No file chosen</small>
+    </div>
+
+    <!-- Image input with placeholder -->
+    <div class="col-md-2">
+        <input type="file" class="form-control" name="image" id="imageInput">
+        <small id="imagePlaceholder" class="form-text text-muted">No image chosen</small>
+    </div>
 
     <button class="btn btn-primary col-12 mt-2" name="add_book">
         <i class="fas fa-plus"></i> Add Book
@@ -168,6 +212,19 @@ document.getElementById("level").addEventListener("change", function(){
             cls.appendChild(o);
         });
     }
+});
+
+/* ===== FILE PLACEHOLDERS ===== */
+const fileInput = document.getElementById('fileInput');
+const filePlaceholder = document.getElementById('filePlaceholder');
+fileInput.addEventListener('change', () => {
+    filePlaceholder.textContent = fileInput.files.length ? fileInput.files[0].name : 'No file chosen';
+});
+
+const imageInput = document.getElementById('imageInput');
+const imagePlaceholder = document.getElementById('imagePlaceholder');
+imageInput.addEventListener('change', () => {
+    imagePlaceholder.textContent = imageInput.files.length ? imageInput.files[0].name : 'No image chosen';
 });
 </script>
 
