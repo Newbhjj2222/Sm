@@ -1,49 +1,68 @@
 <?php
 require __DIR__.'/dbcon.php';
 
-/* ================= ADD BOOK ================= */
+/* ===== CLOUDINARY UPLOAD FUNCTION ===== */
+function uploadToCloudinary($fileTmp, $fileType)
+{
+    $cloudName = "dilowy3fd";
+    $uploadPreset = "Newtalents";
+
+    $endpoint = str_starts_with($fileType, 'image/')
+        ? "https://api.cloudinary.com/v1_1/$cloudName/image/upload"
+        : "https://api.cloudinary.com/v1_1/$cloudName/raw/upload";
+
+    $postFields = [
+        'file' => new CURLFile($fileTmp),
+        'upload_preset' => $uploadPreset
+    ];
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $endpoint);
+    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $postFields);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+    $response = curl_exec($ch);
+    curl_close($ch);
+
+    $data = json_decode($response, true);
+
+    return $data['secure_url'] ?? '';
+}
+
+/* ===== ADD BOOK ===== */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_book'])) {
-    $id = uniqid(); // ID yihariye
 
-    // Avoid undefined array keys
-    $name = isset($_POST['name']) ? $_POST['name'] : '';
-    $level = isset($_POST['level']) ? $_POST['level'] : '';
-    $class = isset($_POST['class']) ? $_POST['class'] : '';
+    $id = uniqid();
+    $name = $_POST['name'] ?? '';
+    $level = $_POST['level'] ?? '';
+    $class = $_POST['class'] ?? '';
 
-    // File upload
-    $fileName = '';
-    if (isset($_FILES['file']) && $_FILES['file']['error'] === 0) {
-        $fileTmp = $_FILES['file']['tmp_name'];
-        $ext = pathinfo($_FILES['file']['name'], PATHINFO_EXTENSION);
-        $fileName = "uploads/{$id}.{$ext}";
-        move_uploaded_file($fileTmp, $fileName);
+    $fileUrl = '';
+    if (!empty($_FILES['file']['tmp_name'])) {
+        $fileUrl = uploadToCloudinary($_FILES['file']['tmp_name'], $_FILES['file']['type']);
     }
 
-    // Image upload
-    $imageName = '';
-    if (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
-        $imgTmp = $_FILES['image']['tmp_name'];
-        $imgExt = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
-        $imageName = "uploads/{$id}_img.{$imgExt}";
-        move_uploaded_file($imgTmp, $imageName);
+    $imageUrl = '';
+    if (!empty($_FILES['image']['tmp_name'])) {
+        $imageUrl = uploadToCloudinary($_FILES['image']['tmp_name'], $_FILES['image']['type']);
     }
 
-    // Save to Firebase
+    // Save to Firebase Realtime Database
     $realtimeDatabase->getReference("library/$id")->set([
         "id" => $id,
         "name" => $name,
         "level" => $level,
         "class" => $class,
-        "file" => $fileName,
-        "image" => $imageName
+        "file" => $fileUrl,
+        "image" => $imageUrl
     ]);
 
-    // Redirect before output
     header("Location: library.php");
     exit;
 }
 
-/* ================= FETCH ================= */
+/* ===== FETCH BOOKS ===== */
 $books = $realtimeDatabase->getReference("library")->getValue();
 
 include("includes/header.php");
@@ -100,7 +119,7 @@ include("includes/header.php");
     <td><?= htmlspecialchars($b['level']) ?></td>
     <td><?= htmlspecialchars($b['class']) ?></td>
     <td>
-        <?php if (!empty($b['image']) && file_exists($b['image'])): ?>
+        <?php if (!empty($b['image'])): ?>
             <img src="<?= htmlspecialchars($b['image']) ?>" alt="<?= htmlspecialchars($b['name']) ?>" style="height:50px;">
         <?php endif; ?>
     </td>
