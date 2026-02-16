@@ -1,213 +1,163 @@
 <?php
-require __DIR__.'/dbcon.php'; 
-session_start();
-
-/* ================= ERROR REPORTING ================= */
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-/* ================= CONFIG ================= */
-$nhostProjectId = 'hheouvehxbgetjbbvchu'; // Reba neza ko ari Project ID nyayo
-$nhostAdminSecret = 'netwebrwanda1234'; // HASURA_GRAPHQL_ADMIN_SECRET
-$cloudName = "dilowy3fd";
-$uploadPreset = "Newtalents";
+require __DIR__.'/dbcon.php';
 
-/* ================= UPLOAD PDF TO NHOST ================= */
-function uploadToNhost($fileTmp, $fileName, $adminSecret, $projectId) {
-
-    if (!file_exists($fileTmp)) {
-        return ['error' => 'PDF temporary file not found'];
-    }
-
-    $url = "https://backend-$projectId.nhost.app/v1/storage/files";
-
-    $postFields = [
-        'file' => new CURLFile(
-            $fileTmp,
-            mime_content_type($fileTmp),
-            $fileName
-        )
-    ];
-
-    $ch = curl_init();
-
-    curl_setopt_array($ch, [
-        CURLOPT_URL => $url,
-        CURLOPT_POST => true,
-        CURLOPT_POSTFIELDS => $postFields,
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_HTTPHEADER => [
-            "x-hasura-admin-secret: $adminSecret"
-        ],
-        CURLOPT_TIMEOUT => 60,
-        CURLOPT_SSL_VERIFYPEER => true
-    ]);
-
-    $response = curl_exec($ch);
-
-    if ($response === false) {
-        $error = curl_error($ch);
-        curl_close($ch);
-        return ['error' => "cURL Error: $error"];
-    }
-
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-
-    if ($httpCode !== 200 && $httpCode !== 201) {
-        return [
-            'error' => "Nhost HTTP Error: $httpCode",
-            'raw_response' => $response
-        ];
-    }
-
-    $data = json_decode($response, true);
-
-    if (json_last_error() !== JSON_ERROR_NONE) {
-        return [
-            'error' => "JSON Decode Error: " . json_last_error_msg(),
-            'raw_response' => $response
-        ];
-    }
-
-    if (!isset($data['fileMetadata']['id'])) {
-        return [
-            'error' => "Upload succeeded but fileMetadata missing",
-            'response' => $data
-        ];
-    }
-
-    return $data;
-}
-
-/* ================= UPLOAD IMAGE TO CLOUDINARY ================= */
-function uploadToCloudinary($fileTmp, $fileType, $cloudName, $uploadPreset)
-{
-    if (!file_exists($fileTmp)) {
-        return ['error' => 'Image temporary file not found'];
-    }
-
-    $endpoint = "https://api.cloudinary.com/v1_1/$cloudName/image/upload";
-
-    $postFields = [
-        'file' => new CURLFile($fileTmp, $fileType),
-        'upload_preset' => $uploadPreset,
-        'folder' => 'books/images'
-    ];
-
-    $ch = curl_init();
-
-    curl_setopt_array($ch, [
-        CURLOPT_URL => $endpoint,
-        CURLOPT_POST => true,
-        CURLOPT_POSTFIELDS => $postFields,
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT => 60,
-        CURLOPT_SSL_VERIFYPEER => true
-    ]);
-
-    $response = curl_exec($ch);
-
-    if ($response === false) {
-        $error = curl_error($ch);
-        curl_close($ch);
-        return ['error' => "Cloudinary cURL Error: $error"];
-    }
-
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-
-    if ($httpCode !== 200) {
-        return [
-            'error' => "Cloudinary HTTP Error: $httpCode",
-            'raw_response' => $response
-        ];
-    }
-
-    $data = json_decode($response, true);
-
-    if (!isset($data['secure_url'])) {
-        return [
-            'error' => "Cloudinary upload failed",
-            'response' => $data
-        ];
-    }
-
-    return ['url' => $data['secure_url']];
-}
-
-/* ================= HANDLE FORM ================= */
+/* ================= ADD BOOK ================= */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_book'])) {
 
     $id = uniqid();
-    $name = $_POST['name'] ?? '';
+
+    $name  = $_POST['name']  ?? '';
     $level = $_POST['level'] ?? '';
     $class = $_POST['class'] ?? '';
 
-    $fileUrl = '';
-    $imageUrl = '';
-
-    /* ===== VALIDATE PDF SIZE ===== */
-    if (!empty($_FILES['file']['size']) && $_FILES['file']['size'] > 10000000) {
-        die("PDF too large. Max 10MB.");
+    /* ===== ENSURE UPLOADS DIR ===== */
+    if (!is_dir("uploads")) {
+        mkdir("uploads", 0777, true);
     }
 
-    /* ===== UPLOAD PDF ===== */
+    /* ===== FILE UPLOAD ===== */
+    $fileName = '';
     if (!empty($_FILES['file']['tmp_name'])) {
-
-        $pdfUpload = uploadToNhost(
-            $_FILES['file']['tmp_name'],
-            $_FILES['file']['name'],
-            $nhostAdminSecret,
-            $nhostProjectId
-        );
-
-        if (isset($pdfUpload['error'])) {
-            echo "<pre>";
-            print_r($pdfUpload);
-            echo "</pre>";
-            exit;
-        }
-
-        // Kubona public URL
-        $fileId = $pdfUpload['fileMetadata']['id'];
-        $fileUrl = "https://backend-$nhostProjectId.nhost.app/v1/storage/files/$fileId";
+        $ext = pathinfo($_FILES['file']['name'], PATHINFO_EXTENSION);
+        $fileName = "uploads/{$id}.".$ext;
+        move_uploaded_file($_FILES['file']['tmp_name'], $fileName);
     }
 
-    /* ===== UPLOAD IMAGE ===== */
+    /* ===== IMAGE UPLOAD ===== */
+    $imageName = '';
     if (!empty($_FILES['image']['tmp_name'])) {
-
-        $imageUpload = uploadToCloudinary(
-            $_FILES['image']['tmp_name'],
-            $_FILES['image']['type'],
-            $cloudName,
-            $uploadPreset
-        );
-
-        if (isset($imageUpload['error'])) {
-            echo "<pre>";
-            print_r($imageUpload);
-            echo "</pre>";
-            exit;
-        }
-
-        $imageUrl = $imageUpload['url'];
+        $imgExt = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
+        $imageName = "uploads/{$id}_img.".$imgExt;
+        move_uploaded_file($_FILES['image']['tmp_name'], $imageName);
     }
 
     /* ===== SAVE TO FIREBASE ===== */
     $realtimeDatabase->getReference("library/$id")->set([
-        "id" => $id,
-        "name" => $name,
+        "id"    => $id,
+        "name"  => $name,
         "level" => $level,
         "class" => $class,
-        "file" => $fileUrl,
-        "image" => $imageUrl,
-        "created_at" => date('Y-m-d H:i:s')
+        "file"  => $fileName,
+        "image" => $imageName
     ]);
 
-    echo "Book added successfully.";
+    header("Location: library.php");
     exit;
 }
+
+/* ================= FETCH ================= */
+$books = $realtimeDatabase->getReference("library")->getValue();
+
+include("includes/header.php");
 ?>
 
+<div class="container mt-5 pt-5">
+
+<h3>Add Book</h3>
+
+<form method="POST" enctype="multipart/form-data" class="row g-2">
+
+    <input class="form-control col-md-4" name="name" placeholder="Book Name" required>
+
+    <select class="form-control col-md-2" name="level" id="level" required>
+        <option value="">Select Level</option>
+        <option value="Primary Lower">Primary Lower</option>
+        <option value="Primary Upper">Primary Upper</option>
+        <option value="Secondary Ordinary">Secondary Ordinary</option>
+        <option value="Secondary Advanced">Secondary Advanced</option>
+    </select>
+
+    <select class="form-control col-md-2" name="class" id="class" required>
+        <option value="">Select Class</option>
+    </select>
+
+    <input type="file" class="form-control col-md-2" name="file" required>
+    <input type="file" class="form-control col-md-2" name="image">
+
+    <button class="btn btn-primary col-12 mt-2" name="add_book">
+        <i class="fas fa-plus"></i> Add Book
+    </button>
+</form>
+
+<hr>
+
+<h3>Library</h3>
+<input id="search" class="form-control mb-2" placeholder="Search book...">
+
+<div class="table-responsive">
+<table class="table table-bordered table-hover" id="table">
+<thead class="table-dark">
+<tr>
+    <th>Name</th>
+    <th>Level</th>
+    <th>Class</th>
+    <th>Image</th>
+    <th>Actions</th>
+</tr>
+</thead>
+<tbody>
+
+<?php if ($books): foreach ($books as $bid => $b): ?>
+<tr>
+    <td><?= htmlspecialchars($b['name'] ?? '') ?></td>
+    <td><?= htmlspecialchars($b['level'] ?? '') ?></td>
+    <td><?= htmlspecialchars($b['class'] ?? '') ?></td>
+    <td>
+        <?php if (!empty($b['image']) && file_exists($b['image'])): ?>
+            <img src="<?= htmlspecialchars($b['image']) ?>" style="height:50px;">
+        <?php endif; ?>
+    </td>
+    <td>
+        <a class="btn btn-sm btn-info" href="view_book.php?id=<?= $bid ?>">
+            View
+        </a>
+        <a class="btn btn-sm btn-danger"
+           onclick="return confirm('Delete this book?')"
+           href="delete_book.php?id=<?= $bid ?>">
+           Delete
+        </a>
+    </td>
+</tr>
+<?php endforeach; endif; ?>
+
+</tbody>
+</table>
+</div>
+</div>
+
+<script>
+/* ===== SEARCH ===== */
+document.getElementById("search").onkeyup = function(){
+    let v = this.value.toLowerCase();
+    document.querySelectorAll("#table tbody tr").forEach(r=>{
+        r.style.display = r.innerText.toLowerCase().includes(v) ? "" : "none";
+    });
+};
+
+/* ===== LEVEL / CLASS ===== */
+const data = {
+    "Primary Lower":["P1","P2","P3"],
+    "Primary Upper":["P4","P5","P6"],
+    "Secondary Ordinary":["S1","S2","S3"],
+    "Secondary Advanced":["S4","S5","S6A","S6"]
+};
+
+document.getElementById("level").addEventListener("change", function(){
+    const cls = document.getElementById("class");
+    cls.innerHTML = "<option value=''>Select Class</option>";
+    if(data[this.value]){
+        data[this.value].forEach(c=>{
+            let o = document.createElement("option");
+            o.value = c;
+            o.text = c;
+            cls.appendChild(o);
+        });
+    }
+});
+</script>
+
+<?php include("includes/footer.php"); ?>
