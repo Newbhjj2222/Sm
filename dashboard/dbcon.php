@@ -3,7 +3,7 @@ require __DIR__ . '/../vendor/autoload.php';
 use Kreait\Firebase\Factory;
 
 $factory = (new Factory)
-    ->withServiceAccount(__DIR__ . '/../school-managements-8cfb7-firebase-adminsdk-fbsvc-8019685afc.json')
+    ->withServiceAccount(__DIR__ . '/../school-managements-8cfb7-firebase-adminsdk-fbsvc-1e7201f5bb.json')
     ->withDatabaseUri('https://school-managements-8cfb7-default-rtdb.firebaseio.com/');
 
 $auth = $factory->createAuth();
@@ -14,4 +14,5 @@ $cloudStorage = $factory->createStorage();
 
 // Comment Firestore line because it requires grpc extension
 // $firestore = $factory->createFirestore();
+
 ?>
