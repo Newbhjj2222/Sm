@@ -155,6 +155,8 @@
   <a href="login.php">🔐 Login</a>
   <a href="poly.php">👤 Quiz Portal</a>
   <a href="profile.php">👤 Profile</a>
+   <a href="dashboard">🏠 Dashboard</a>
+
 </div>
 
 
