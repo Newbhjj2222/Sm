@@ -9,7 +9,7 @@ error_reporting(E_ALL);
 
 /* ================= CONFIG ================= */
 $nhostProjectId = 'hheouvehxbgetjbbvchu'; // Reba neza ko ari Project ID nyayo
-$nhostAdminSecret = 'SHYIRAMO_ADMIN_SECRET_NYAYO'; // HASURA_GRAPHQL_ADMIN_SECRET
+$nhostAdminSecret = 'netwebrwanda1234'; // HASURA_GRAPHQL_ADMIN_SECRET
 $cloudName = "dilowy3fd";
 $uploadPreset = "Newtalents";
 
@@ -210,3 +210,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_book'])) {
     exit;
 }
 ?>
+
