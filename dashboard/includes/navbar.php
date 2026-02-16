@@ -13,6 +13,20 @@
       <li><a href="./dashboard/students.php"><i class="fas fa-user-graduate"></i> Students</a></li>
       <li><a href="./teachers.php"><i class="fas fa-chalkboard-teacher"></i> Teachers</a></li>
       <li><a href="./classes.php"><i class="fas fa-school"></i> Classes</a></li>
+      <li>
+    <a href="./dashboard_posts.php" class="menu-item <?= basename($_SERVER['PHP_SELF']) == 'dashboard_posts.php' ? 'active' : '' ?>">
+        <i class="fas fa-newspaper"></i>
+        <span>Posts</span>
+    </a>
+</li>
+
+<li>
+    <a href="./library.php" class="menu-item <?= basename($_SERVER['PHP_SELF']) == 'library.php' ? 'active' : '' ?>">
+        <i class="fas fa-book"></i>
+        <span>Library</span>
+    </a>
+</li>
+
       <li><a href="./messeges.php"><i class="fas fa-comments"></i> Messeges</a></li>
       <li><a href="./attendance.php"><i class="fas fa-calendar-check"></i> Attendance</a></li>
       <li><a href="./attendancemanager.php"><i class="fas fa-calendar-check"></i> Attendance Manager</a></li>
@@ -162,5 +176,6 @@ toggler.addEventListener("click", ()=>{
     }
 });
 </script>
+
 
 
